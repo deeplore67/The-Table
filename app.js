@@ -1,8 +1,8 @@
 // THE TABLE - Clean Supabase version
 
 const CONFIG = {
-  SUPABASE_URL: "PASTE_YOUR_API_URL_HERE",
-  SUPABASE_ANON_KEY: "PASTE_YOUR_PUBLISHABLE_KEY_HERE"
+  SUPABASE_URL: "https://haynwwrwbwhsmylttsho.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_Rwv83YNoX0kf9X4zpln1aA_FPtFCJNQ"
 };
 
 
