@@ -269,7 +269,7 @@ if (!invitation) {
     "Invalid or already used invitation code.";
 
   return;
-
+}
 
     // Username validation
     if (
