@@ -247,16 +247,19 @@ enterBtn.addEventListener(
 
 
     // TEST INVITATION CODE
-    const { data: invitation, error: invitationError } =
-  await supabaseClient
-    .from("invitations")
-    .select("id, code, used")
-    .eq("code", code)
-    .eq("used", false)
-    .maybeSingle();
+   const { data: invitationValid, error: invitationError } =
+  await supabaseClient.rpc(
+    "use_invitation",
+    {
+      invite_code: code
+    }
+  );
 
 if (invitationError) {
-  console.error("Invitation error:", invitationError);
+  console.error(
+    "Invitation error:",
+    invitationError
+  );
 
   gateMsg.textContent =
     "Could not verify invitation.";
@@ -264,13 +267,12 @@ if (invitationError) {
   return;
 }
 
-if (!invitation) {
+if (!invitationValid) {
   gateMsg.textContent =
     "Invalid or already used invitation code.";
 
   return;
-}
-
+} 
     // Username validation
     if (
       !/^[a-zA-Z0-9_ -]{2,24}$/.test(
