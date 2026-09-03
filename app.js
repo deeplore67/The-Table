@@ -247,15 +247,28 @@ enterBtn.addEventListener(
 
 
     // TEST INVITATION CODE
-    if (
-      code !== "TABLE-7K4M-92QX"
-    ) {
+    const { data: invitation, error: invitationError } =
+  await supabaseClient
+    .from("invitations")
+    .select("id, code, used")
+    .eq("code", code)
+    .eq("used", false)
+    .maybeSingle();
 
-      gateMsg.textContent =
-        "Invalid invitation code.";
+if (invitationError) {
+  console.error("Invitation error:", invitationError);
 
-      return;
-    }
+  gateMsg.textContent =
+    "Could not verify invitation.";
+
+  return;
+}
+
+if (!invitation) {
+  gateMsg.textContent =
+    "Invalid or already used invitation code.";
+
+  return;
 
 
     // Username validation
