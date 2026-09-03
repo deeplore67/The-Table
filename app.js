@@ -1,8 +1,8 @@
 // THE TABLE - Supabase connected version
 
 const CONFIG = {
-  SUPABASE_URL: "PASTE_YOUR_API_URL_HERE",
-  SUPABASE_ANON_KEY: "PASTE_YOUR_PUBLISHABLE_KEY_HERE"
+  SUPABASE_URL: "https://haynwwrwbwhsmylttsho.supabase.co/rest/v1/",
+  SUPABASE_ANON_KEY: "sb_publishable_Rwv83YNoX0kf9X4zpln1aA_FPtFCJNQ"
 };
 
 const supabaseClient = window.supabase.createClient(
