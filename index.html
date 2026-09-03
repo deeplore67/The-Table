@@ -1,51 +1,127 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>The Table</title>
+
+  <meta
+    name="description"
+    content="A private place for invited people to talk."
+  >
+
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <main class="shell">
+
+  <main class="container">
+
+    <!-- INVITATION GATE -->
     <section id="gate" class="card">
+
       <div class="logo">T</div>
+
       <h1>The Table</h1>
-      <p class="muted">A private place for invited people to talk.</p>
+
+      <p class="muted">
+        A private place for invited people to talk.
+      </p>
 
       <label for="invite">Invitation code</label>
-      <input id="invite" type="text" autocomplete="off" placeholder="Enter your invite code">
+
+      <input
+        id="invite"
+        type="text"
+        placeholder="Enter your invite code"
+        autocomplete="off"
+      >
 
       <label for="username">Username</label>
-      <input id="username" type="text" maxlength="24" autocomplete="off" placeholder="Choose a username">
 
-      <button id="enterBtn">Enter The Table</button>
+      <input
+        id="username"
+        type="text"
+        placeholder="Choose a username"
+        maxlength="24"
+        autocomplete="off"
+      >
+
+      <button id="enterBtn" type="button">
+        Enter The Table
+      </button>
+
       <p id="gateMsg" class="message"></p>
-      <small class="muted">Use a nickname. Don't post personal information or illegal/harmful content.</small>
+
+      <p class="muted">
+        Use a nickname. Don't post personal information or illegal/harmful content.
+      </p>
+
     </section>
 
-    <section id="app" class="app hidden">
-      <header class="topbar">
+
+    <!-- CHAT APP -->
+    <section id="app" class="card hidden">
+
+      <header class="room-header">
+
         <div>
           <h1>The Table</h1>
-          <span id="roomLabel" class="muted">Main room</span>
+
+          <span id="roomLabel" class="muted">
+            Main room
+          </span>
         </div>
-        <button id="leaveBtn" class="ghost">Leave</button>
+
+        <button id="leaveBtn" class="ghost" type="button">
+          Leave
+        </button>
+
       </header>
 
-      <div id="messages" class="messages" aria-live="polite"></div>
 
+      <!-- MESSAGES -->
+      <div
+        id="messages"
+        class="messages"
+        aria-live="polite"
+      ></div>
+
+
+      <!-- MESSAGE COMPOSER -->
       <form id="composer" class="composer">
-        <input id="messageInput" maxlength="1000" autocomplete="off"
-               placeholder="Say something…">
-        <button type="submit">Send</button>
+
+        <input
+          id="messageInput"
+          type="text"
+          maxlength="1000"
+          autocomplete="off"
+          placeholder="Say something..."
+        >
+
+        <button type="submit">
+          Send
+        </button>
+
       </form>
 
-<p id="appMsg" class="message"></p>
-</section>
-</main>
-<script
-src="https://cdn.jsdelivr.net/npm/@supabase/supabase
--js2@"></script><scipt src="app.js"></scipt>script>
+
+      <p id="appMsg" class="message"></p>
+
+    </section>
+
+  </main>
+
+
+  <!-- SUPABASE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- THE TABLE JAVASCRIPT -->
+  <script src="app.js"></script>
+
 </body>
-</html>
+</html> 
+
+     
+      
