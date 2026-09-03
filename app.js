@@ -102,6 +102,11 @@ enterBtn.addEventListener("click", async () => {
       "Enter both an invitation code and username.";
     return;
   }
+  
+  if (code !== "TABLE-7K4M-92QX") {
+    gateMsg.textContent = "Invalid invitation code.";
+    return;
+  }
 
   if (!/^[a-zA-Z0-9_ -]{2,24}$/.test(name)) {
     gateMsg.textContent =
