@@ -1,19 +1,14 @@
-/*
-  THE TABLE - frontend starter
-
-  IMPORTANT:
-  GitHub Pages is only the frontend. Do not put a database service-role key
-  or any secret credential in this file.
-
-  For a production deployment, connect this UI to a backend such as Supabase
-  and enforce invitation checks + row-level security on the server.
-*/
+// THE TABLE - Supabase connected version
 
 const CONFIG = {
-  // Replace these after creating your backend:
-  SUPABASE_URL: "",
-  SUPABASE_ANON_KEY: ""
+  SUPABASE_URL: "PASTE_YOUR_API_URL_HERE",
+  SUPABASE_ANON_KEY: "PASTE_YOUR_PUBLISHABLE_KEY_HERE"
 };
+
+const supabaseClient = window.supabase.createClient(
+  CONFIG.SUPABASE_URL,
+  CONFIG.SUPABASE_ANON_KEY
+);
 
 const gate = document.querySelector("#gate");
 const app = document.querySelector("#app");
@@ -28,7 +23,7 @@ const composer = document.querySelector("#composer");
 const messageInput = document.querySelector("#messageInput");
 
 let currentUser = null;
-let demoMessages = [];
+let currentRoomId = null;
 
 function escapeHtml(value) {
   const div = document.createElement("div");
@@ -40,70 +35,199 @@ function showMessage(text) {
   appMsg.textContent = text;
 }
 
-function render() {
-  messages.innerHTML = demoMessages.map(m => `
-    <article class="msg">
-      <span class="name">${escapeHtml(m.username)}</span>
-      <span class="time">${escapeHtml(m.time)}</span>
-      <div class="body">${escapeHtml(m.text)}</div>
-    </article>
-  `).join("");
+function renderMessages(data) {
+  messages.innerHTML = data.map(m => {
+    const time = new Date(m.created_at).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    return `
+      <article class="msg">
+        <span class="name">${escapeHtml(m.username)}</span>
+        <span class="time">${escapeHtml(time)}</span>
+        <div class="body">${escapeHtml(m.message)}</div>
+      </article>
+    `;
+  }).join("");
 
   messages.scrollTop = messages.scrollHeight;
 }
 
-enterBtn.addEventListener("click", () => {
+async function loadRoom() {
+  const { data, error } = await supabaseClient
+    .from("rooms")
+    .select("id, name")
+    .eq("name", "The Table")
+    .single();
+
+  if (error) {
+    console.error(error);
+    gateMsg.textContent = "Could not connect to The Table.";
+    return false;
+  }
+
+  currentRoomId = data.id;
+
+  const roomLabel = document.querySelector("#roomLabel");
+  if (roomLabel) {
+    roomLabel.textContent = data.name;
+  }
+
+  return true;
+}
+
+async function loadMessages() {
+  const { data, error } = await supabaseClient
+    .from("messages")
+    .select("id, username, message, created_at")
+    .eq("room_id", currentRoomId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error(error);
+    showMessage("Could not load messages.");
+    return;
+  }
+
+  renderMessages(data || []);
+}
+
+enterBtn.addEventListener("click", async () => {
   const code = invite.value.trim();
   const name = username.value.trim();
 
   if (!code || !name) {
-    gateMsg.textContent = "Enter both an invitation code and username.";
+    gateMsg.textContent =
+      "Enter both an invitation code and username.";
     return;
   }
 
   if (!/^[a-zA-Z0-9_ -]{2,24}$/.test(name)) {
-    gateMsg.textContent = "Username must be 2–24 characters and use letters, numbers, spaces, _ or -.";
+    gateMsg.textContent =
+      "Username must be 2–24 characters and use letters, numbers, spaces, _ or -.";
     return;
   }
 
-  /*
-    DEMO ONLY:
-    This accepts any non-empty invite code. It is NOT secure.
-    Replace this with a server-side invitation verification before launch.
-  */
+  gateMsg.textContent = "Connecting...";
+
+  const roomReady = await loadRoom();
+
+  if (!roomReady) {
+    return;
+  }
+
   currentUser = name;
-  sessionStorage.setItem("table_username", name);
+
+  // Create a profile for this visitor.
+  // This is anonymous; no email or real name is collected.
+  const profileId = crypto.randomUUID();
+
+  const { error: profileError } = await supabaseClient
+    .from("profiles")
+    .insert({
+      id: profileId,
+      username: currentUser
+    });
+
+  // If the username already exists, continue into the room.
+  // The chat itself does not depend on the profile row.
+  if (profileError) {
+    console.log("Profile notice:", profileError.message);
+  }
+
+  sessionStorage.setItem("table_username", currentUser);
+
   gate.classList.add("hidden");
   app.classList.remove("hidden");
+
+  await loadMessages();
+
+  showMessage("Connected to The Table.");
   messageInput.focus();
 
-  showMessage("Demo mode: messages currently live only in this browser.");
+  subscribeToMessages();
 });
 
 leaveBtn.addEventListener("click", () => {
   currentUser = null;
+  currentRoomId = null;
+
   sessionStorage.removeItem("table_username");
+
   app.classList.add("hidden");
   gate.classList.remove("hidden");
+
   messages.innerHTML = "";
   invite.value = "";
+  showMessage("");
 });
 
-composer.addEventListener("submit", (event) => {
+composer.addEventListener("submit", async (event) => {
   event.preventDefault();
+
   const text = messageInput.value.trim();
 
-  if (!text || !currentUser) return;
+  if (!text || !currentUser || !currentRoomId) {
+    return;
+  }
 
-  demoMessages.push({
-    username: currentUser,
-    text,
-    time: new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})
-  });
+  const { error } = await supabaseClient
+    .from("messages")
+    .insert({
+      room_id: currentRoomId,
+      username: currentUser,
+      message: text
+    });
+
+  if (error) {
+    console.error(error);
+    showMessage("Message could not be sent.");
+    return;
+  }
 
   messageInput.value = "";
-  render();
 });
 
+function subscribeToMessages() {
+  supabaseClient
+    .channel("table-messages")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "messages",
+        filter: `room_id=eq.${currentRoomId}`
+      },
+      payload => {
+        const m = payload.new;
+
+        const time = new Date(m.created_at).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+
+        messages.insertAdjacentHTML(
+          "beforeend",
+          `
+          <article class="msg">
+            <span class="name">${escapeHtml(m.username)}</span>
+            <span class="time">${escapeHtml(time)}</span>
+            <div class="body">${escapeHtml(m.message)}</div>
+          </article>
+          `
+        );
+
+        messages.scrollTop = messages.scrollHeight;
+      }
+    )
+    .subscribe();
+}
+
+// Restore username when returning to the page.
 const savedName = sessionStorage.getItem("table_username");
-if (savedName) username.value = savedName;
+
+if (savedName) {
+  username.value = savedName;
+} 
